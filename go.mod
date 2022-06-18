@@ -1,4 +1,4 @@
-module gitlab.com/bcharles/mete-o-bot2
+module github.com/b-charles/mete-o-bot
 
 go 1.18
 
