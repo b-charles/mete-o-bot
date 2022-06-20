@@ -17,10 +17,11 @@ jobs:
           go-version: '~1.18.3'
       - run: go build -o bin/
       - run: mkdir -p target
-      - uses: montudor/action-zip@v1
+      - uses: thedoctor0/zip-release@main
         with:
-          args: zip -q -r -o ../target/meteobot.zip *
-          working-directory: bin
+          type: 'zip'
+          directory: 'bin'
+          filename: '../target/meteobot.zip'
       - uses: jakejarvis/s3-sync-action@master
         with:
           args: --follow-symlinks --delete
