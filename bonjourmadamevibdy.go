@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -33,21 +32,19 @@ func (self *bonjourmadamevibdy) format() Message {
 	return Message{Title: "BonjourMadame-Vi-BDY", Body: self.link}
 }
 
-func Bonjourmadamevibdy() Message {
+func Bonjourmadamevibdy() (Message, error) {
 
 	resp, err := http.Get("http://dites.bonjourmadame.fr")
 	if err != nil {
-		log.Print(err)
-		return BONJOURMADAMEVIBDY_DEFAULT.format()
+		return BONJOURMADAMEVIBDY_DEFAULT.format(), err
 	}
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Print(err)
-		return BONJOURMADAMEVIBDY_DEFAULT.format()
+		return BONJOURMADAMEVIBDY_DEFAULT.format(), err
 	}
 
-	return (&bonjourmadamevibdy{}).parse(doc).format()
+	return new(bonjourmadamevibdy).parse(doc).format(), nil
 
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -35,21 +34,19 @@ func (self *citocin) format() Message {
 	return Message{Title: "Cit-O-CIN", Body: msg}
 }
 
-func Citocin() Message {
+func Citocin() (Message, error) {
 
 	resp, err := http.Get("http://www.kaakook.fr")
 	if err != nil {
-		log.Print(err)
-		return CITOCIN_DEFAULT.format()
+		return CITOCIN_DEFAULT.format(), err
 	}
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Print(err)
-		return CITOCIN_DEFAULT.format()
+		return CITOCIN_DEFAULT.format(), err
 	}
 
-	return (&citocin{}).parse(doc).format()
+	return new(citocin).parse(doc).format(), nil
 
 }

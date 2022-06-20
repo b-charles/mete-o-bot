@@ -2,34 +2,90 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"gopkg.in/gomail.v2"
 )
+
+// Error collection
+
+type ErrorCollection struct {
+	errors []error
+}
+
+func (self *ErrorCollection) AddError(err error) {
+	self.errors = append(self.errors, err)
+}
+
+func (self *ErrorCollection) Add(format string, a ...any) {
+	self.AddError(errors.New(fmt.Sprintf(format, a...)))
+}
+
+func (self *ErrorCollection) NilIfEmpty() error {
+	if len(self.errors) == 0 {
+		return nil
+	} else {
+		return self
+	}
+}
+
+func (self *ErrorCollection) Error() string {
+
+	var builder strings.Builder
+
+	l := len(self.errors)
+
+	fmt.Fprintf(&builder, "Collected errors (%d):\n", l)
+	for i, e := range self.errors {
+		fmt.Fprintf(&builder, "\tError %d/%d: %s\n", i+1, l, e.Error())
+	}
+
+	return builder.String()
+
+}
+
+// Message / Mail body
 
 type Message struct {
 	Title string
 	Body  string
 }
 
-func bodyMessage() string {
+func (self Message) String() string {
+	return fmt.Sprintf("%s\n---\n%s\n", self.Title, self.Body)
+}
 
-	var messages = []Message{
-		Meteopnm(),
-		Citocin(),
-		Bonjourmadamevibdy()}
+func CompleteMessage() (Message, error) {
+
+	messages := []Message{}
+	errors := new(ErrorCollection)
+
+	for _, messager := range []func() (Message, error){Meteopnm, Citocin, Bonjourmadamevibdy} {
+		msg, err := messager()
+		messages = append(messages, msg)
+		if err != nil {
+			errors.AddError(err)
+		}
+	}
 
 	var builder strings.Builder
 	for _, msg := range messages {
 		fmt.Fprintf(&builder, "%s <br>~~~~~~~~~<br><br> %s <br><br>", msg.Title, msg.Body)
 	}
-	return builder.String()
+
+	return Message{
+			Title: fmt.Sprintf("Mété-O-BOT %s", today()),
+			Body:  builder.String()},
+		errors.NilIfEmpty()
 
 }
+
+// Mail recipients
 
 type Recipient struct {
 	Name    string
@@ -47,22 +103,22 @@ func mailTo() []Recipient {
 
 }
 
-func main() {
+// Main handle
 
-	subject := fmt.Sprintf("Mété-O-BOT %s", today())
-	body := bodyMessage()
+func handle() error {
 
-	host := os.Getenv("SMTP_HOST")
-	if host == "" {
-		fmt.Println(subject)
-		fmt.Println("---")
-		fmt.Println(body)
-		return
+	errors := new(ErrorCollection)
+
+	sendMessage, err := CompleteMessage()
+	if err != nil {
+		errors.AddError(err)
 	}
 
+	host := os.Getenv("SMTP_HOST")
 	port, err := strconv.Atoi(os.Getenv("SMTP_PORT"))
 	if err != nil {
-		panic(err)
+		errors.AddError(err)
+		return errors
 	}
 
 	user := os.Getenv("SMTP_USER")
@@ -71,7 +127,8 @@ func main() {
 	dialer := gomail.NewDialer(host, port, user, password)
 	sender, err := dialer.Dial()
 	if err != nil {
-		panic(err)
+		errors.AddError(err)
+		return errors
 	}
 
 	from := os.Getenv("MAIL_FROM")
@@ -82,15 +139,21 @@ func main() {
 
 		message.SetHeader("From", from)
 		message.SetAddressHeader("To", recipient.Address, recipient.Name)
-		message.SetHeader("Subject", subject)
-		message.SetBody("text/html", body)
+		message.SetHeader("Subject", sendMessage.Title)
+		message.SetBody("text/html", sendMessage.Body)
 
 		if err := gomail.Send(sender, message); err != nil {
-			log.Printf("Could not send email to %v (%v): %v", recipient.Name, recipient.Address, err)
+			errors.Add("Could not send email to %v (%v): %v", recipient.Name, recipient.Address, err)
 		}
 
 		message.Reset()
 
 	}
 
+	return errors.NilIfEmpty()
+
+}
+
+func main() {
+	lambda.Start(handle)
 }

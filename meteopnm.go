@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -64,7 +63,6 @@ const METEOPNM_FORMAT = "Météo Paris &#2947; " +
 	"%s &#2947; Bonne journée !"
 
 func (self *meteopnm) format() Message {
-
 	msg := fmt.Sprintf(METEOPNM_FORMAT,
 		today(),
 		self.morningT, self.morningW,
@@ -75,21 +73,19 @@ func (self *meteopnm) format() Message {
 	return Message{Title: "Mété-O-PNM", Body: msg}
 }
 
-func Meteopnm() Message {
+func Meteopnm() (Message, error) {
 
 	resp, err := http.Get("https://www.meteo-paris.com")
 	if err != nil {
-		log.Print(err)
-		return METEOPNM_DEFAULT.format()
+		return METEOPNM_DEFAULT.format(), err
 	}
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Print(err)
-		return METEOPNM_DEFAULT.format()
+		return METEOPNM_DEFAULT.format(), err
 	}
 
-	return (&meteopnm{}).parse(doc).format()
+	return new(meteopnm).parse(doc).format(), nil
 
 }
