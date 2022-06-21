@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -124,6 +125,7 @@ func handle() error {
 	user := os.Getenv("SMTP_USER")
 	password := os.Getenv("SMTP_PASSWORD")
 
+	log.Printf("Dial SMTP server..\n.")
 	dialer := gomail.NewDialer(host, port, user, password)
 	sender, err := dialer.Dial()
 	if err != nil {
@@ -133,9 +135,12 @@ func handle() error {
 
 	from := os.Getenv("MAIL_FROM")
 
-	message := gomail.NewMessage()
+	log.Printf("Sending...\n")
 
+	message := gomail.NewMessage()
 	for _, recipient := range mailTo() {
+
+		log.Printf("Sending to %s...\n", recipient.Name)
 
 		message.SetHeader("From", from)
 		message.SetAddressHeader("To", recipient.Address, recipient.Name)
@@ -149,6 +154,8 @@ func handle() error {
 		message.Reset()
 
 	}
+
+	log.Printf("Sent!\n")
 
 	return errors.NilIfEmpty()
 
