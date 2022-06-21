@@ -15,13 +15,10 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: '~1.18.3'
-      - run: go build -o bin/
-      - run: mkdir -p target
-      - uses: thedoctor0/zip-release@main
-        with:
-          type: 'zip'
-          directory: 'bin'
-          filename: '../target/meteobot.zip'
+      - run: |
+          mkdir -p bin target
+          GOOS=linux go build -o bin/
+          cd bin && zip -r ../target/meteobot.zip *
       - uses: jakejarvis/s3-sync-action@master
         with:
           args: --follow-symlinks --delete
@@ -31,4 +28,11 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
           SOURCE_DIR: 'target'
+      - uses: kazimanzurrashid/aws-lambda-update-action@v1
+        with:
+          zip-file: target/meteobot.zip
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
 
