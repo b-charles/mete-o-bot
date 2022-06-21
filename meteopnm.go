@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -75,17 +76,20 @@ func (self *meteopnm) format() Message {
 
 func Meteopnm() (Message, error) {
 
+	log.Printf("Loading Mete-O-PNM...\n")
 	resp, err := http.Get("https://www.meteo-paris.com")
 	if err != nil {
 		return METEOPNM_DEFAULT.format(), err
 	}
 	defer resp.Body.Close()
 
+	log.Printf("Parsing Mete-O-PNM...\n")
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return METEOPNM_DEFAULT.format(), err
 	}
 
+	defer log.Printf("Mete-O-PNM processed!\n")
 	return new(meteopnm).parse(doc).format(), nil
 
 }
