@@ -88,14 +88,25 @@ func CompleteMessage() (Message, error) {
 
 // Mail recipients
 
-type Recipient struct {
+type UserMail struct {
 	Name    string
 	Address string
 }
 
-func mailTo() []Recipient {
+func mailFrom() UserMail {
 
-	var r []Recipient
+	var r UserMail
+	if err := json.Unmarshal([]byte(os.Getenv("MAIL_FROM")), &r); err != nil {
+		panic(err)
+	}
+
+	return r
+
+}
+
+func mailTo() []UserMail {
+
+	var r []UserMail
 	if err := json.Unmarshal([]byte(os.Getenv("MAIL_TO")), &r); err != nil {
 		panic(err)
 	}
@@ -125,7 +136,7 @@ func handle() error {
 	user := os.Getenv("SMTP_USER")
 	password := os.Getenv("SMTP_PASSWORD")
 
-	log.Printf("Dial SMTP server..\n.")
+	log.Printf("Dial SMTP server...\n")
 	dialer := gomail.NewDialer(host, port, user, password)
 	sender, err := dialer.Dial()
 	if err != nil {
@@ -133,7 +144,7 @@ func handle() error {
 		return errors
 	}
 
-	from := os.Getenv("MAIL_FROM")
+	from := mailFrom()
 
 	log.Printf("Sending...\n")
 
@@ -142,7 +153,7 @@ func handle() error {
 
 		log.Printf("Sending to %s...\n", recipient.Name)
 
-		message.SetHeader("From", from)
+		message.SetAddressHeader("From", from.Address, from.Name)
 		message.SetAddressHeader("To", recipient.Address, recipient.Name)
 		message.SetHeader("Subject", sendMessage.Title)
 		message.SetBody("text/html", sendMessage.Body)
