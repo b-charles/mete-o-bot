@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -38,7 +39,10 @@ func (self *citocin) format() Message {
 func Citocin() (Message, error) {
 
 	log.Printf("Loading Cit-O-CIN...\n")
-	resp, err := http.Get("http://www.kaakook.fr")
+	client := &http.Client{
+		Timeout: 1 * time.Second,
+	}
+	resp, err := client.Get("http://www.kaakook.fr")
 	if err != nil {
 		return CITOCIN_DEFAULT.format(), err
 	}

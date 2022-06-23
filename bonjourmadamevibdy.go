@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -36,7 +37,10 @@ func (self *bonjourmadamevibdy) format() Message {
 func Bonjourmadamevibdy() (Message, error) {
 
 	log.Printf("Loading Bonjourmadame-Vi-BDY...\n")
-	resp, err := http.Get("http://dites.bonjourmadame.fr")
+	client := &http.Client{
+		Timeout: 1 * time.Second,
+	}
+	resp, err := client.Get("http://dites.bonjourmadame.fr")
 	if err != nil {
 		return BONJOURMADAMEVIBDY_DEFAULT.format(), err
 	}

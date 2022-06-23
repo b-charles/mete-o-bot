@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -77,7 +78,10 @@ func (self *meteopnm) format() Message {
 func Meteopnm() (Message, error) {
 
 	log.Printf("Loading Mete-O-PNM...\n")
-	resp, err := http.Get("https://www.meteo-paris.com")
+	client := &http.Client{
+		Timeout: 1 * time.Second,
+	}
+	resp, err := client.Get("https://www.meteo-paris.com")
 	if err != nil {
 		return METEOPNM_DEFAULT.format(), err
 	}
