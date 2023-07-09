@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/b-charles/pigs/ioc"
+	"github.com/b-charles/pigs/json"
 	"github.com/b-charles/pigs/log"
 	"github.com/b-charles/pigs/smartconfig"
 	"gopkg.in/gomail.v2"
@@ -10,6 +11,22 @@ import (
 type UserMail struct {
 	Name    string
 	Address string
+}
+
+// parse an user mail from a json node
+func ParseUserMail(config string) (*UserMail, error) {
+	if node, err := json.ParseString(config); err != nil {
+		return nil, err
+	} else {
+		return &UserMail{
+			Name:    node.GetMember("name").AsString(),
+			Address: node.GetMember("address").AsString(),
+		}, nil
+	}
+}
+
+func init() {
+	ioc.PutNamed("UserMail parser", ParseUserMail, func(smartconfig.Parser) {})
 }
 
 type MailConfig struct {
