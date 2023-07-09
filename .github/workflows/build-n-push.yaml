@@ -17,7 +17,7 @@ jobs:
           go-version: '~1.20.5'
       - run: |
           mkdir -p bin target
-          GOOS=linux go build -o bin/
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/
           cd bin && zip -r ../target/meteobot.zip *
       - uses: jakejarvis/s3-sync-action@master
         with:
