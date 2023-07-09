@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/b-charles/pigs/ioc"
 )
 
-type BonjourMadame struct{}
+type BonjourMadame struct {
+	HttpClient HttpClient `inject:""`
+}
 
 func (self *BonjourMadame) Order() int {
 	return 30
@@ -42,24 +42,17 @@ func (self *BonjourMadame) Message() (*Message, error) {
 
 	msg := &bonjourMadameMessage{}
 
-	client := &http.Client{
-		Timeout: 3 * time.Second,
-	}
-	resp, err := client.Get("http://dites.bonjourmadame.fr")
-	if err != nil {
-		return msg.format(), err
-	}
-	defer resp.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	resp, err := self.HttpClient.SimpleGet("http://dites.bonjourmadame.fr")
 	if err != nil {
 		return msg.format(), err
 	}
 
-	src, exist := doc.Find("div[class=\"post-content\"] img").First().Attr("src")
-	if exist {
-		msg.link = strings.TrimSpace(src)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(resp))
+	if err != nil {
+		return msg.format(), err
 	}
+
+	msg.link = strings.TrimSpace(doc.Find("div[class=\"post-content\"] img").First().AttrOr("src", ""))
 
 	return msg.format(), nil
 

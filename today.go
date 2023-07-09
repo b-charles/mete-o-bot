@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
-	"time"
+
+	"github.com/b-charles/pigs/ioc"
+	"github.com/benbjohnson/clock"
 )
 
 var WEEK = []string{
@@ -28,9 +30,13 @@ var MONTHS = []string{"",
 	"Novembre",
 	"Décembre"}
 
-func today() string {
+type Today struct {
+	Clock clock.Clock `inject:""`
+}
 
-	now := time.Now()
+func (self *Today) Get() string {
+
+	now := self.Clock.Now()
 
 	return fmt.Sprintf(
 		"%s %d %s %d",
@@ -39,4 +45,8 @@ func today() string {
 		MONTHS[now.Month()],
 		now.Year())
 
+}
+
+func init() {
+	ioc.Put(&Today{})
 }

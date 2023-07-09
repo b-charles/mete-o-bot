@@ -22,6 +22,7 @@ type Service interface {
 
 type Services struct {
 	Logger   log.Logger `inject:""`
+	Today    *Today     `inject:""`
 	Services []Service  `inject:""`
 }
 
@@ -62,7 +63,7 @@ func (self *Services) CompileMessages() *Message {
 	}
 
 	return &Message{
-		Title: fmt.Sprintf("Mété-O-BOT %s", today()),
+		Title: fmt.Sprintf("Mété-O-BOT %s", self.Today.Get()),
 		Body:  builder.String(),
 	}
 

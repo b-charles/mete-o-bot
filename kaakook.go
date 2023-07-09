@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/b-charles/pigs/ioc"
 )
 
-type Kaakook struct{}
+type Kaakook struct {
+	HttpClient HttpClient `inject:""`
+}
 
 func (self *Kaakook) Order() int {
 	return 20
@@ -47,16 +47,12 @@ func (self *Kaakook) Message() (*Message, error) {
 
 	msg := &kaakookMessage{}
 
-	client := &http.Client{
-		Timeout: 3 * time.Second,
-	}
-	resp, err := client.Get("http://www.kaakook.fr")
+	resp, err := self.HttpClient.SimpleGet("http://www.kaakook.fr")
 	if err != nil {
 		return msg.format(), err
 	}
-	defer resp.Body.Close()
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(resp))
 	if err != nil {
 		return msg.format(), err
 	}
