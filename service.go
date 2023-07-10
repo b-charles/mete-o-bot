@@ -50,7 +50,7 @@ func (self *Services) CompileMessages() *Message {
 
 	results := make([]*serviceResult, n)
 	for i := 0; i < n; i++ {
-		results = append(results, <-c)
+		results[i] = <-c
 	}
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].service.Order() < results[j].service.Order()
