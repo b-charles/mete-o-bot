@@ -6,6 +6,7 @@ import (
 
 	"github.com/b-charles/pigs/ioc"
 	"github.com/b-charles/pigs/json"
+	"github.com/b-charles/pigs/log"
 	"github.com/b-charles/pigs/smartconfig"
 )
 
@@ -72,6 +73,7 @@ type MeteoConfig struct {
 }
 
 type Meteo struct {
+	Logger     log.Logger   `inject:""`
 	Today      *Today       `inject:""`
 	Config     *MeteoConfig `inject:""`
 	HttpClient HttpClient   `inject:""`
@@ -115,6 +117,11 @@ func (self *Meteo) Message() (*Message, error) {
 			ephemerideErr = err
 		} else {
 
+			self.Logger.Info().
+				Set("service", self.Name()).
+				Set("ephemeride_response", node).
+				Log()
+
 			eph := node.GetMember("ephemeride")
 			msg.sunrise = eph.GetMember("sunrise").AsString()
 			msg.sunset = eph.GetMember("sunset").AsString()
@@ -130,6 +137,11 @@ func (self *Meteo) Message() (*Message, error) {
 		if node, err := json.ParseString(resp.Body); err != nil {
 			forecastErr = err
 		} else {
+
+			self.Logger.Info().
+				Set("service", self.Name()).
+				Set("forecast_response", node).
+				Log()
 
 			today := node.GetMember("forecast").GetElement(0)
 			msg.morningT = today.GetElement(1).GetMember("temp2m").AsInt()

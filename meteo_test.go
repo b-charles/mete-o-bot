@@ -8,6 +8,8 @@ import (
 
 	. "github.com/b-charles/mete-o-bot"
 	"github.com/b-charles/pigs/ioc"
+	"github.com/b-charles/pigs/json"
+	"github.com/b-charles/pigs/log"
 	"github.com/benbjohnson/clock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -53,6 +55,12 @@ func (self *FakeClient) Get(url string, headers map[string]string) chan *HttpRes
 
 }
 
+type GinkgoLogAppender struct{}
+
+func (self *GinkgoLogAppender) Append(node json.JsonNode) {
+	GinkgoWriter.Print(node.String())
+}
+
 var _ = Describe("Meteo", func() {
 
 	BeforeEach(func() {
@@ -63,6 +71,8 @@ var _ = Describe("Meteo", func() {
 		ioc.TestPut(mockedClock, func(clock.Clock) {})
 
 		ioc.TestPut(&FakeClient{}, func(HttpClient) {})
+
+		ioc.TestPut(&GinkgoLogAppender{}, func(log.Appender) {})
 
 	})
 
